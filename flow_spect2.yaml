@@ -1,0 +1,74 @@
+meta:
+  portal_url: "<completar>"
+  requiere_vpn: true
+  descripcion: "Flujo: abrir buscador, seleccionar tipo de documento, buscar por DNI, elegir primer resultado"
+  datos_entrada:
+    - nombre: dni
+      ejemplo: "2994****"
+
+pasos:
+  - id: abrir_buscador_desde_icono
+    pantalla: "Home"
+    proposito: "Abrir el buscador desde el ícono del teléfono amarillo (barra superior, centro)"
+    localizar:
+      alternativas:
+        - tooltip: "Búsqueda"
+        - aria_label: "Búsqueda"
+        - role: "button"
+          icono: "teléfono"
+    accion: "click"
+    esperar:
+      tipo: "elemento_visible"
+      objetivo:
+        por_texto: "Encontrar Comunicante Búsqueda CIM"
+
+  - id: seleccionar_pestaña_cliente
+    pantalla: "Encontrar Comunicante Búsqueda CIM"
+    proposito: "Asegurar que la búsqueda sea por Cliente"
+    localizar:
+      role: "tab|radio"
+      por_texto: "Cliente"
+    accion: "select"
+    esperar:
+      tipo: "elemento_visible"
+      objetivo:
+        etiqueta: "Tipo de Documento"
+
+  - id: seleccionar_tipo_documento_dni
+    pantalla: "Encontrar Comunicante Búsqueda CIM"
+    proposito: "Elegir el tipo de documento correcto"
+    localizar:
+      role: "combobox"
+      etiqueta: "Tipo de Documento"
+    accion: "select"
+    valor: "Documento Nacional Identidad"   # usar el texto exacto del combo
+    esperar:
+      tipo: "elemento_visible"
+      objetivo:
+        etiqueta: "Número de Documento"
+
+  - id: ingresar_dni_y_buscar
+    pantalla: "Encontrar Comunicante Búsqueda CIM"
+    proposito: "Ingresar el DNI y ejecutar la búsqueda"
+    localizar:
+      role: "textbox"
+      etiqueta: "Número de Documento"
+    accion: "type_and_enter"
+    valor: "{{dni}}"
+    esperar:
+      tipo: "lista_cargada"
+      objetivo:
+        titulo_o_contenedor: "Búsqueda: Contacto y Suscripción"  # grilla de resultados
+
+  - id: seleccionar_primer_resultado
+    pantalla: "Búsqueda: Contacto y Suscripción"
+    proposito: "Abrir el primer resultado de la lista"
+    localizar:
+      lista:
+        contenedor_por_titulo: "Búsqueda: Contacto y Suscripción"
+    accion: "select_index"
+    indice: 0
+    esperar:
+      tipo: "navegacion"
+      objetivo:
+        modo: "nueva_pantalla_o_detalle"

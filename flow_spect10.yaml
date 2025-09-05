@@ -1,0 +1,270 @@
+meta:
+  portal_url: "<completar>"
+  requiere_vpn: true
+  descripcion: "Buscar por DNI, abrir primer resultado, ir a Resumen de Facturación, iterar todas las Cuentas Financieras con saldo, extraer Saldo y capturar encabezado"
+  datos_entrada:
+    - nombre: dni
+      ejemplo: "2994****"
+  salida:
+    - tipo: "coleccion"
+      nombre: "resultados_cf"
+      item_campos:
+        - nombre: "cf_id"
+        - nombre: "cf_nombre"
+        - nombre: "saldo_texto"
+        - nombre: "saldo_numero"
+        - nombre: "screenshot_path"
+
+pasos:
+  - id: abrir_buscador_desde_icono
+    pantalla: "Home"
+    proposito: "Abrir el buscador desde el ícono del teléfono amarillo (barra superior, centro)"
+    localizar:
+      alternativas:
+        - tooltip: "Búsqueda"
+        - aria_label: "Búsqueda"
+        - role: "button"
+          icono: "teléfono"
+    accion: "click"
+    esperar:
+      tipo: "elemento_visible"
+      objetivo:
+        por_texto: "Encontrar Comunicante Búsqueda CIM"
+
+  - id: seleccionar_pestaña_cliente
+    pantalla: "Encontrar Comunicante Búsqueda CIM"
+    proposito: "Usar la pestaña Cliente"
+    localizar:
+      role: "tab|radio"
+      por_texto: "Cliente"
+    accion: "select"
+
+  - id: seleccionar_tipo_documento_dni
+    pantalla: "Encontrar Comunicante Búsqueda CIM"
+    proposito: "Elegir 'Documento Nacional Identidad'"
+    localizar:
+      role: "combobox"
+      etiqueta: "Tipo de Documento"
+    accion: "select"
+    valor: "Documento Nacional Identidad"
+
+  - id: ingresar_dni
+    pantalla: "Encontrar Comunicante Búsqueda CIM"
+    proposito: "Ingresar el número de documento"
+    localizar:
+      role: "textbox"
+      etiqueta: "Número de Documento"
+    accion: "type"
+    valor: "{{dni}}"
+
+  - id: ejecutar_busqueda
+    pantalla: "Encontrar Comunicante Búsqueda CIM"
+    proposito: "Lanzar la búsqueda"
+    preferencia: "enter"
+    alternativas:
+      - tipo: "enter"
+      - tipo: "click"
+        localizar:
+          por_texto: "Buscar ahora"
+    esperar:
+      tipo: "lista_cargada"
+      objetivo:
+        titulo_o_contenedor: "Búsqueda: Contacto y Suscripción"
+
+  - id: ver_todo_si_hay
+    pantalla: "Búsqueda: Contacto y Suscripción"
+    proposito: "Mostrar todas las filas si la lista está paginada"
+    condicion:
+      existe:
+        por_texto: "Ver todo"
+    si_verdadero:
+      localizar:
+        por_texto: "Ver todo"
+      accion: "click"
+      esperar:
+        tipo: "lista_actualizada"
+    si_falso:
+      continuar_con: "seleccionar_primer_resultado"
+
+  - id: seleccionar_primer_resultado
+    pantalla: "Búsqueda: Contacto y Suscripción"
+    proposito: "Abrir SIEMPRE la primera fila de resultados"
+    precondicion:
+      verificar_filas:
+        minimo: 1
+        si_cero_continuar_con: "sin_resultados"
+    localizar:
+      lista:
+        contenedor_por_titulo: "Búsqueda: Contacto y Suscripción"
+        fila_indice: 0
+        click_objetivo: "columna_enlace_principal"
+    accion: "click"
+    esperar:
+      tipo: "navegacion"
+
+  - id: sin_resultados
+    pantalla: "Búsqueda: Contacto y Suscripción"
+    proposito: "Caso sin resultados"
+    salida:
+      info_apartado: "Sin resultados"
+      estado: "finalizado_sin_datos"
+
+  - id: abrir_tab_resumen_facturacion
+    pantalla: "Home de Interacción"
+    proposito: "Ir a la pestaña Resumen de Facturación"
+    localizar:
+      role: "tab"
+      por_texto: "Resumen de Facturación"
+    accion: "select"
+    esperar:
+      tipo: "elemento_visible"
+      objetivo:
+        por_texto: "Entidades de facturación"
+
+  - id: abrir_barra_opciones_resumen
+    pantalla: "Home de Interacción > Resumen de Facturación"
+    proposito: "Click en la barra amarilla (entre 'Perfil actual del cliente' y 'Entidades de facturación')"
+    localizar:
+      contexto:
+        anclas:
+          - por_texto: "Perfil actual del cliente"
+          - por_texto: "Entidades de facturación"
+      alternativas:
+        - role: "button"
+          estilo: "amarillo"
+        - relativo_a: "Entidades de facturación"
+          posicion: "arriba-inmediato"
+    accion: "click"
+
+  - id: seleccionar_entidad_cuenta_financiera
+    pantalla: "Home de Interacción > Resumen de Facturación"
+    proposito: "Seleccionar 'Cuenta financiera' en Entidades de facturación"
+    localizar:
+      tabla:
+        titulo: "Entidades de facturación"
+        fila_por_texto: "Cuenta financiera"
+        control: "radio"
+    accion: "select"
+    esperar:
+      tipo: "elemento_habilitado"
+      objetivo:
+        por_texto: "Mostrar lista"
+
+  - id: mostrar_lista_cuenta_financiera
+    pantalla: "Home de Interacción > Resumen de Facturación"
+    proposito: "Ver la 'Lista de Cuenta financiera'"
+    localizar:
+      por_texto: "Mostrar lista"
+    accion: "click"
+    esperar:
+      tipo: "tabla_visible"
+      objetivo:
+        titulo_o_contenedor: "Lista de Cuenta financiera"
+
+  # BUCLE: procesar TODAS las CF con Saldo > 0
+  - id: procesar_cuentas_con_saldo
+    tipo: "loop"
+    pantalla: "Home de Interacción > Resumen de Facturación"
+    proposito: "Iterar por todas las CF con saldo > 0"
+    coleccion:
+      tabla:
+        titulo: "Lista de Cuenta financiera"
+        filtro_filas: "Saldo > 0"
+      identificador_item: "ID de FA|Nombre FA"   # usar el que esté disponible
+      orden: "aparicion"                         # o 'mayor_saldo' si se prefiere
+    pasos_loop:
+      - id: abrir_cf_actual
+        localizar:
+          tabla:
+            titulo: "Lista de Cuenta financiera"
+            fila_por_identificador: "{{item_id}}"
+            click_objetivo: "columna:Nombre de la cuenta financiera"   # enlace azul
+        accion: "click"
+        esperar:
+          tipo: "navegacion"
+          objetivo:
+            titulo_o_contenedor: "Ver Cuenta Financiera"
+
+      - id: extraer_y_capturar_cf_actual
+        pantalla: "Ver Cuenta Financiera"
+        proposito: "Extraer Saldo y capturar encabezado"
+        extraccion:
+          campos:
+            - nombre: "cf_id"
+              selector:
+                etiqueta: "ID de FA"
+            - nombre: "cf_nombre"
+              selector:
+                etiqueta: "Nombre FA"
+            - nombre: "saldo_texto"
+              selector:
+                etiqueta: "Saldo"
+            - nombre: "saldo_numero"
+              derivado_de: "saldo_texto"
+              normalizacion:
+                locale_origen: "es-AR"
+                locale_salida: "en-US"
+        captura:
+          objetivo:
+            region_por_anclas:
+              - etiqueta: "Estado"
+              - etiqueta: "Saldo"
+              - etiqueta: "Moneda"
+              - etiqueta: "Fecha de saldo"
+          archivo: "capturas/{{dni}}_saldo_cf_{{cf_id}}.png"
+        registrar_en:
+          coleccion: "resultados_cf"
+          item:
+            cf_id: "{{cf_id}}"
+            cf_nombre: "{{cf_nombre}}"
+            saldo_texto: "{{saldo_texto}}"
+            saldo_numero: "{{saldo_numero}}"
+            screenshot_path: "capturas/{{dni}}_saldo_cf_{{cf_id}}.png"
+
+      - id: volver_a_resumen_y_reabrir_lista
+        proposito: "Volver a la barra amarilla y reabrir la lista para la siguiente CF"
+        pasos:
+          - localizar:
+              role: "tab"
+              por_texto: "Resumen de Facturación"
+            accion: "select"
+          - localizar:
+              contexto:
+                anclas:
+                  - por_texto: "Perfil actual del cliente"
+                  - por_texto: "Entidades de facturación"
+              alternativas:
+                - role: "button"
+                  estilo: "amarillo"
+            accion: "click"
+          - localizar:
+              tabla:
+                titulo: "Entidades de facturación"
+                fila_por_texto: "Cuenta financiera"
+                control: "radio"
+            accion: "select"
+          - localizar:
+              por_texto: "Mostrar lista"
+            accion: "click"
+            esperar:
+              tipo: "tabla_visible"
+              objetivo:
+                titulo_o_contenedor: "Lista de Cuenta financiera"
+        marcar_item_actual_como_procesado: true
+
+    condicion_salida:
+      cuando: "No queden filas con Saldo > 0 no procesadas"
+      si_verdadero: "continuar_con:compilar_mensaje_final"
+
+  - id: compilar_mensaje_final
+    proposito: "Armar texto para WhatsApp con todas las CF con saldo"
+    construir_texto:
+      plantilla: |
+        DNI {{dni}} - Cuentas con saldo:
+        {{#resultados_cf}}
+        • {{cf_nombre}} ({{cf_id}}): {{saldo_texto}}
+        {{/resultados_cf}}
+    adjuntos:
+      - patron: "capturas/{{dni}}_saldo_cf_*.png"
+    salida:
+      mensaje: "DNI {{dni}} - Se adjuntan saldos de Cuentas Financieras"

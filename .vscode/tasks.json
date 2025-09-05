@@ -1,0 +1,74 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Python deps",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python -m playwright install --with-deps"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Install Playwright Browsers (no sudo)",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"source .venv/bin/activate && python -m playwright install --with-deps --no-sandbox || python -m playwright install"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build executable (PyInstaller)",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"source .venv/bin/activate && pip install pyinstaller && pyinstaller --clean --onefile --name t3bot pyinstaller.spec"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build executable (PyInstaller, spec)",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"source .venv/bin/activate && pyinstaller --clean pyinstaller.spec"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build executable (fixed spec)",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"source .venv/bin/activate && pyinstaller --clean --onefile --name t3bot pyinstaller.spec && ls -lh dist/"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build executable (spec only)",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"source .venv/bin/activate && pyinstaller --clean pyinstaller.spec && ls -lh dist/"
+			],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

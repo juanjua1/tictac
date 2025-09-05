@@ -1,0 +1,7 @@
+__pycache__/
+.venv/
+.env
+playwright-report/
+pytest_cache/
+*.log
+capturas/
