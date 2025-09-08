@@ -1,39 +1,37 @@
-# Scraping T3.0 (Amdocs) - Automatización por DNI
+# Automatización Visual por DNI
 
-Este proyecto automatiza el flujo descrito en `flow_spect10.yaml`:
-- Ingresar al portal (VPN a nivel sistema requerida).
-- Abrir buscador, seleccionar tipo de documento, ingresar DNI y buscar.
-- Abrir primer resultado, navegar a "Resumen de Facturación".
-- Iterar Cuentas Financieras con saldo > 0, extraer Saldo y capturar encabezado.
-- Compilar salida para WhatsApp (texto + adjuntos).
+Proyecto reducido: sólo modo visual (PyAutoGUI + reconocimiento de imágenes). Se eliminó la ejecución Playwright y los YAML de flujo. El bot simula clicks y tipeo sobre una sesión remota / escritorio usando capturas de referencia en `capturas/`.
 
 ## Requisitos
-- Python 3.10+
-- VPN activa en el sistema antes de ejecutar
+* Python 3.10+
+* Dependencias del sistema para `pyautogui` (en Windows ya incluidas). En Linux: librerías X11 y acceso a pantalla.
 
-## Instalación rápida
-
+## Instalación
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python -m playwright install --with-deps
 ```
 
-## Uso
-
+## Uso (fuente)
 ```bash
-python -m src.scraper.cli --dni 2994**** --flow flow_spect10.yaml --head
+python -m src.scraper.cli --dni 29940807 --step-delay 0.8
 ```
-
 Parámetros:
-- `--dni`: DNI a consultar.
-- `--flow`: ruta al YAML de flujo (por defecto `flow_spect10.yaml`).
-- `--head/--no-head`: ejecutar con o sin UI del navegador.
-- `--slowmo`: ms de retraso entre acciones.
+* `--dni` (obligatorio)
+* `--step-delay` segundos entre pasos (default 0.8)
+* `--region` limitar búsqueda de imágenes: x,y,ancho,alto (ej: `--region 1920,0,1920,1080` para segunda pantalla)
+* `--confidence` umbral de matching (default 0.8)
 
-Las capturas se guardan en `capturas/`.
+Salida: genera una captura final `capturas/resultado_final_<DNI>.png` (o fallback de pantalla completa).
+
+## Empaquetado (PyInstaller)
+```bash
+pyinstaller --clean --onefile --name t3bot pyinstaller.spec
+```
+Ejecutable resultante en `dist/`.
 
 ## Notas
-- No se incluyen credenciales ni URL del portal; completar `portal_url` en el YAML.
-- Evitar datos personales reales durante pruebas.
+* Ajustá las imágenes en `capturas/` para el entorno (resolución, tema).
+* Si cambia el layout visual, reemplazá las imágenes manteniendo los nombres.
+* Para mejorar robustez, bajar `--confidence` o recortar mejor las anclas.

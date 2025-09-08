@@ -1,27 +1,19 @@
-"""
-PyInstaller spec para generar un ejecutable de una sola pieza.
-Build (Windows recomendado ejecutarlo en Windows):
-    pyinstaller --clean --onefile --name t3bot pyinstaller.spec
-Salida:
-    dist/t3bot.exe (Windows) o dist/t3bot (Linux)
+"""Spec simplificado: solo modo visual (PyAutoGUI).
 
-Nota: Los YAML de flujo se leen desde el disco (misma carpeta que el .exe). Copiá el .yaml junto al ejecutable.
+Build:
+    pyinstaller --clean --onefile --name t3bot pyinstaller.spec
+
+Salida: dist/t3bot(.exe)
 """
 
 block_cipher = None
-
-from PyInstaller.utils.hooks import copy_metadata
-import glob
 
 a = Analysis(
     ['src/scraper/cli.py'],
     pathex=['.'],
     binaries=[],
-    datas=copy_metadata('playwright') +
-          [(f, '.') for f in glob.glob('flow_spec*.yaml')] +
-          [(f, '.') for f in glob.glob('flow_spect*.yaml')] +
-          [('windows/README_WINDOWS.md', 'windows'), ('windows/run_t3bot.bat', 'windows')],
-    hiddenimports=['playwright', 'playwright.sync_api', 'dotenv', 'yaml', 'rich'],
+    datas=[('windows/README_WINDOWS.md', 'windows'), ('windows/run_t3bot.bat', 'windows')],
+    hiddenimports=['pyautogui', 'PIL', 'pyscreeze'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

@@ -1,1 +1,0 @@
-# Visual automation package
